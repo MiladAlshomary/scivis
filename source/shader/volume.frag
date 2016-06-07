@@ -38,6 +38,16 @@ inside_volume_bounds(const in vec3 sampling_position)
             && all(lessThanEqual(sampling_position, max_bounds)));
 }
 
+float
+get_gradient(vec3 in_sampling_pos)
+{
+    vec3 obj_to_tex = vec3(1.0) / max_bounds;
+    p_sample = texture(volume_texture, (in_sampling_pos-1) * obj_to_tex).r; 
+    c_sample = texture(volume_texture, in_sampling_pos * obj_to_tex).r; 
+
+    retrun (c_sample - p_sample)/2;
+}
+
 
 float
 get_sample_data(vec3 in_sampling_pos)
