@@ -63,7 +63,7 @@ void main()
     if (!inside_volume)
         discard;
 
-#if TASK == 10
+if TASK == 10
     vec4 max_val = vec4(0.0, 0.0, 0.0, 0.0);
     
     // the traversal loop,
@@ -91,9 +91,11 @@ void main()
     }
 
     dst = max_val;
-#endif 
+endif 
     
-#if TASK == 11
+if TASK == 11
+    vec4 avg_val = vec4(0.0, 0.0, 0.0, 0.0);
+    int count = 0;
     // the traversal loop,
     // termination when the sampling position is outside volume boundarys
     // another termination condition for early ray termination is added
@@ -102,18 +104,33 @@ void main()
         // get sample
         float s = get_sample_data(sampling_pos);
 
+        // apply the transfer functions to retrieve color and opacity
+        vec4 color = texture(transfer_texture, vec2(s, s));
+
         // dummy code
-        dst = vec4(sampling_pos, 1.0);
+        avg_val.r = color.r + avg_val.r;
+        avg_val.g = color.g + avg_val.g;
+        avg_val.b = color.b + avg_val.b;
+        avg_val.a = color.a + avg_val.a;
         
         // increment the ray sampling position
         sampling_pos  += ray_increment;
 
         // update the loop termination condition
         inside_volume  = inside_volume_bounds(sampling_pos);
+        count++;
     }
-#endif
+
+    avg_val.r = avg_val.r/count;
+    avg_val.g = avg_val.g/count;
+    avg_val.b = avg_val.b/count;
+    avg_val.a = avg_val.a/count;
+    dst = max_val;
+endif
     
-#if TASK == 12 || TASK == 13
+if TASK == 12 || TASK == 13
+
+    float previous_val = -1;
     // the traversal loop,
     // termination when the sampling position is outside volume boundarys
     // another termination condition for early ray termination is added
@@ -122,25 +139,31 @@ void main()
         // get sample
         float s = get_sample_data(sampling_pos);
 
-        // dummy code
-        dst = vec4(light_diffuse_color, 1.0);
+
+        if(previous_val != -1 && previous_val != s) {//we hit some value
+            // apply the transfer functions to retrieve color and opacity
+            vec4 color = texture(transfer_texture, vec2(s, s));
+            dst = color;
+            break;
+        }
 
         // increment the ray sampling position
         sampling_pos += ray_increment;
-#if TASK == 13 // Binary Search
-        IMPLEMENT;
-#endif
-#if ENABLE_LIGHTNING == 1 // Add Shading
-        IMPLEMENTLIGHT;
-#if ENABLE_SHADOWING == 1 // Add Shadows
-        IMPLEMENTSHADOW;
-#endif
-#endif
+        
+        #if TASK == 13 // Binary Search
+                IMPLEMENT;
+        #endif
+        #if ENABLE_LIGHTNING == 1 // Add Shading
+                IMPLEMENTLIGHT;
+        #if ENABLE_SHADOWING == 1 // Add Shadows
+                IMPLEMENTSHADOW;
+        #endif
+        #endif
 
         // update the loop termination condition
         inside_volume = inside_volume_bounds(sampling_pos);
     }
-#endif 
+endif 
 
 #if TASK == 31
     // the traversal loop,
