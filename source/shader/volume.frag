@@ -42,10 +42,10 @@ float
 get_gradient(vec3 in_sampling_pos)
 {
     vec3 obj_to_tex = vec3(1.0) / max_bounds;
-    p_sample = texture(volume_texture, (in_sampling_pos-1) * obj_to_tex).r; 
-    c_sample = texture(volume_texture, in_sampling_pos * obj_to_tex).r; 
+    float p_sample = texture(volume_texture, (in_sampling_pos-1) * obj_to_tex).r; 
+    float c_sample = texture(volume_texture, in_sampling_pos * obj_to_tex).r; 
 
-    retrun (c_sample - p_sample)/2;
+    return (c_sample - p_sample)/2;
 }
 
 
@@ -155,14 +155,14 @@ if (TASK == 12 || TASK == 13){
             vec4 color = texture(transfer_texture, vec2(s, s));
 
             //implementing fragment shader
-            vec3 light_direction = (sampling_pos - light_position)
-            float cross_product = dot(light_direction, ray_increment)
+            //vec3 light_direction = (sampling_pos - light_position)
+            //float cross_product = dot(light_direction, ray_increment)
 
-            vec3 diff = light_diffuse_color * max(cross_product, 0)
-            vec3 spec = light_specular_color * max(cross_product,0)
+            //vec3 diff = light_diffuse_color * max(cross_product, 0)
+            //vec3 spec = light_specular_color * max(cross_product,0)
 
-            dst = color + diff + spec;
-            break;
+            //dst = color + diff + spec;
+            //break;
 
             dst = color;
             break;
