@@ -38,29 +38,7 @@ inside_volume_bounds(const in vec3 sampling_position)
             && all(lessThanEqual(sampling_position, max_bounds)));
 }
 
-float
-get_gradient(vec3 in_sampling_pos)
-{
-    vec3 obj_to_tex = vec3(1.0) / max_bounds;
 
-    pX1 = in_sampling_pos.x -1;
-    pX2 = in_sampling_pos.x +1;
-    float p_sample_x = texture(volume_texture, (pX2) * obj_to_tex).r - texture(volume_texture, (pX1) * obj_to_tex).r; 
-
-    pY1 = in_sampling_pos.y -1;
-    pY2 = in_sampling_pos.y +1;
-    float p_sample_y = texture(volume_texture, (pY2) * obj_to_tex).r - texture(volume_texture, (pY2) * obj_to_tex).r; 
-
-    pZ1 = in_sampling_pos.z -1;
-    pZ2 = in_sampling_pos.z +1;
-    float p_sample_z = texture(volume_texture, (pZ2) * obj_to_tex).r - texture(volume_texture, (pZ1) * obj_to_tex).r; 
-    
-
-    vec3 normal = vec3(p_sample_x, p_sample_y, p_sample_z);
-
-
-    return normal;
-}
 
 
 float
@@ -69,6 +47,33 @@ get_sample_data(vec3 in_sampling_pos)
     vec3 obj_to_tex = vec3(1.0) / max_bounds;
     return texture(volume_texture, in_sampling_pos * obj_to_tex).r;
 
+}
+
+vec3
+get_gradient(vec3 in_sampling_pos)
+{
+
+
+    float pX1 = in_sampling_pos.x - 1;
+    float pX2 = in_sampling_pos.x + 1;
+    
+    float p_sample_x = get_sample_data(vec3(pX2,in_sampling_pos.y, in_sampling_pos.z)) - get_sample_data(vec3(pX1,in_sampling_pos.y, in_sampling_pos.z));
+
+    float pY1 = in_sampling_pos.y - 1;
+    float pY2 = in_sampling_pos.y + 1;
+    
+    float p_sample_y = get_sample_data(vec3(in_sampling_pos.x, pY2, in_sampling_pos.z)) - get_sample_data(vec3(in_sampling_pos.x, pY1, in_sampling_pos.z)); 
+
+    float pZ1 = in_sampling_pos.z - 1;
+    float pZ2 = in_sampling_pos.z + 1;
+    
+    float p_sample_z = get_sample_data(vec3(in_sampling_pos.x, in_sampling_pos.y, pZ2)) - get_sample_data(vec3(in_sampling_pos.x, in_sampling_pos.y, pZ1)); 
+    
+
+    vec3 normal = vec3(p_sample_x/2, p_sample_y/2, p_sample_z/2);
+
+
+    return normal;
 }
 
 void main()
@@ -169,37 +174,37 @@ if (TASK == 12 || TASK == 13){
             vec4 color = texture(transfer_texture, vec2(s, s));
 
             //implementing fragment shader
-            vec3 light_direction = (sampling_pos - light_position);
-            vec3 normal =get_gradient(sampling_pos);
+            vec3 light_direction = normalize(sampling_pos - light_position);
+            vec3 normal = normalize(get_gradient(sampling_pos));
             
-            float cross_product = dot(light_direction, normal)
+            float cross_product = dot(light_direction, normal);
 
-            vec3 diff = light_diffuse_color * max(cross_product, 0)
-            vec3 spec = light_specular_color * max(cross_product,0)
+            vec3 diff = light_diffuse_color * max(cross_product, 0);
+            vec3 spec = light_specular_color * max(cross_product,0);
 
-            dst = color + diff + spec;
-            //break;
-
-            dst = color;
+            //dst = color + vec4(diff,1.0) + vec4(spec,1.0);
+            dst = vec4(normal/2+0.5, 1.0);
             break;
+
+	     
+	    //if TASK == 13 // Binary Search
+	        //IMPLEMENT;
+	    //endif
+	    //if ENABLE_LIGHTNING == 1 // Add Shading
+	        //IMPLEMENTLIGHT;
+	    //if ENABLE_SHADOWING == 1 // Add Shadows
+	        //IMPLEMENTSHADOW;
+	    //endif
+	    //endif
+
         }
 
-	previous_val = s;
-        // increment the ray sampling position
-        sampling_pos += ray_increment;
-        
-        //if TASK == 13 // Binary Search
-                //IMPLEMENT;
-        //endif
-        //if ENABLE_LIGHTNING == 1 // Add Shading
-                //IMPLEMENTLIGHT;
-        //if ENABLE_SHADOWING == 1 // Add Shadows
-                //IMPLEMENTSHADOW;
-        //endif
-        //endif
 
         // update the loop termination condition
         inside_volume = inside_volume_bounds(sampling_pos);
+	
+	// increment the ray sampling position
+        sampling_pos += ray_increment;
     }
 }
 
