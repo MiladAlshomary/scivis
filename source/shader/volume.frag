@@ -45,19 +45,18 @@ get_gradient(vec3 in_sampling_pos)
 
     pX1 = in_sampling_pos.x -1;
     pX2 = in_sampling_pos.x +1;
-    float p_sample_x = texture(volume_texture, (pX2 - pX1) * obj_to_tex).r; 
+    float p_sample_x = texture(volume_texture, (pX2) * obj_to_tex).r - texture(volume_texture, (pX1) * obj_to_tex).r; 
 
     pY1 = in_sampling_pos.y -1;
     pY2 = in_sampling_pos.y +1;
-    float p_sample_y = texture(volume_texture, (pY2 - pY1) * obj_to_tex).r; 
+    float p_sample_y = texture(volume_texture, (pY2) * obj_to_tex).r - texture(volume_texture, (pY2) * obj_to_tex).r; 
 
     pZ1 = in_sampling_pos.z -1;
     pZ2 = in_sampling_pos.z +1;
-    float p_sample_z = texture(volume_texture, (pZ2 - pZ1) * obj_to_tex).r; 
+    float p_sample_z = texture(volume_texture, (pZ2) * obj_to_tex).r - texture(volume_texture, (pZ1) * obj_to_tex).r; 
     
 
-
-    vec3 normal = vec3(pX, pY, pZ);
+    vec3 normal = vec3(p_sample_x, p_sample_y, p_sample_z);
 
 
     return normal;
