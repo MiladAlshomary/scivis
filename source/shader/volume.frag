@@ -153,6 +153,17 @@ if (TASK == 12 || TASK == 13){
         if(s > iso_value) {//we hit some value
             // apply the transfer functions to retrieve color and opacity
             vec4 color = texture(transfer_texture, vec2(s, s));
+
+            //implementing fragment shader
+            vec3 light_direction = (sampling_pos - light_position)
+            float cross_product = dot(light_direction, ray_increment)
+
+            vec3 diff = light_diffuse_color * max(cross_product, 0)
+            vec3 spec = light_specular_color * max(cross_product,0)
+
+            dst = color + diff + spec;
+            break;
+
             dst = color;
             break;
         }
