@@ -42,10 +42,25 @@ float
 get_gradient(vec3 in_sampling_pos)
 {
     vec3 obj_to_tex = vec3(1.0) / max_bounds;
-    float p_sample = texture(volume_texture, (in_sampling_pos-1) * obj_to_tex).r; 
-    float c_sample = texture(volume_texture, in_sampling_pos * obj_to_tex).r; 
 
-    return (c_sample - p_sample)/2;
+    pX1 = in_sampling_pos.x -1;
+    pX2 = in_sampling_pos.x +1;
+    float p_sample_x = texture(volume_texture, (pX2 - pX1) * obj_to_tex).r; 
+
+    pY1 = in_sampling_pos.y -1;
+    pY2 = in_sampling_pos.y +1;
+    float p_sample_y = texture(volume_texture, (pY2 - pY1) * obj_to_tex).r; 
+
+    pZ1 = in_sampling_pos.z -1;
+    pZ2 = in_sampling_pos.z +1;
+    float p_sample_z = texture(volume_texture, (pZ2 - pZ1) * obj_to_tex).r; 
+    
+
+
+    vec3 normal = vec3(pX, pY, pZ);
+
+
+    return normal;
 }
 
 
@@ -155,13 +170,15 @@ if (TASK == 12 || TASK == 13){
             vec4 color = texture(transfer_texture, vec2(s, s));
 
             //implementing fragment shader
-            //vec3 light_direction = (sampling_pos - light_position)
-            //float cross_product = dot(light_direction, ray_increment)
+            vec3 light_direction = (sampling_pos - light_position);
+            vec3 normal =get_gradient(sampling_pos);
+            
+            float cross_product = dot(light_direction, normal)
 
-            //vec3 diff = light_diffuse_color * max(cross_product, 0)
-            //vec3 spec = light_specular_color * max(cross_product,0)
+            vec3 diff = light_diffuse_color * max(cross_product, 0)
+            vec3 spec = light_specular_color * max(cross_product,0)
 
-            //dst = color + diff + spec;
+            dst = color + diff + spec;
             //break;
 
             dst = color;
