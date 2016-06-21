@@ -199,11 +199,11 @@ if (TASK == 12 || TASK == 13){
         float s = get_sample_data(sampling_pos);
 
         if(s > iso_value) {
-
+            vec3 new_sample_point = sampling_pos;
             //Binary Search
     	    if (TASK == 13){
                 //new sample point
-    	        vec3 new_sample_point = binary_search(sampling_pos,first_pos, iso_value);
+    	        new_sample_point = binary_search(sampling_pos,first_pos, iso_value);
                 //new sample value
                 s = get_sample_data(new_sample_point);
             }
@@ -216,13 +216,13 @@ if (TASK == 12 || TASK == 13){
             //Add Shading
             if(ENABLE_LIGHTNING == 1) {
                 //implementing fragment shader
-                vec3 light_direction = normalize(sampling_pos - light_position);
-                vec3 normal = normalize(get_gradient(sampling_pos));
+                vec3 light_direction = normalize(new_sample_point - light_position);
+                vec3 normal = normalize(get_gradient(new_sample_point));
                 float cross_product = dot(light_direction, normal);
                 vec3 diff = light_diffuse_color * max(cross_product, 0);
                 vec3 spec = light_specular_color * max(cross_product,0);
                 dst = dst + vec4(diff,1.0) + vec4(spec,1.0);
-                //dst = vec4(normal/2+0.5, 1.0);
+
             }
     	    
             //Add Shadows
@@ -235,6 +235,7 @@ if (TASK == 12 || TASK == 13){
         }
 
         previous_val = s;
+        first_pos = sampling_pos;
         // update the loop termination condition
         inside_volume = inside_volume_bounds(sampling_pos);
 	
@@ -243,32 +244,37 @@ if (TASK == 12 || TASK == 13){
     }
 }
 
-#if TASK == 31
+if(TASK == 31){
     // the traversal loop,
     // termination when the sampling position is outside volume boundarys
     // another termination condition for early ray termination is added
+    float trans = 1;
     while (inside_volume)
     {
-        // get sample
-#if ENABLE_OPACITY_CORRECTION == 1 // Opacity Correction
-        IMPLEMENT;
-#else
-        float s = get_sample_data(sampling_pos);
-#endif
-        // dummy code
-        dst = vec4(light_specular_color, 1.0);
+	// get sample
+	#if ENABLE_OPACITY_CORRECTION == 1 // Opacity Correction
+		//IMPLEMENT;
+	#else
+		float s = get_sample_data(sampling_pos);
+	#endif
+	
+	vec4 color = texture(transfer_texture, vec2(s, s));
+	dst +=  color * trans ;
 
-        // increment the ray sampling position
-        sampling_pos += ray_increment;
+	// increment the ray sampling position
+	sampling_pos += ray_increment;
+	#if ENABLE_LIGHTNING == 1 // Add Shading
+		//IMPLEMENT;
+	#endif
 
-#if ENABLE_LIGHTNING == 1 // Add Shading
-        IMPLEMENT;
-#endif
+	trans *= (1 - color.a);
+        
+        if(trans == 0){break;}
 
-        // update the loop termination condition
-        inside_volume = inside_volume_bounds(sampling_pos);
+	// update the loop termination condition
+	inside_volume = inside_volume_bounds(sampling_pos);
     }
-#endif 
+} 
 
     // return the calculated color value
     FragColor = dst;
