@@ -57,18 +57,18 @@ get_gradient(vec3 in_sampling_pos)
     float y_v = max_bounds.y / volume_dimensions.y;
     float z_v = max_bounds.z / volume_dimensions.z;
 
-    p2x = vec3(in_sampling_pos.x + x_v,in_sampling_pos.y, in_sampling_pos.z)
-    p1x = vec3(in_sampling_pos.x - x_v,in_sampling_pos.y, in_sampling_pos.z)
+    vec3 p2x = vec3(in_sampling_pos.x + x_v,in_sampling_pos.y, in_sampling_pos.z);
+    vec3 p1x = vec3(in_sampling_pos.x - x_v,in_sampling_pos.y, in_sampling_pos.z);
     
     float p_sample_x = get_sample_data(p2x) - get_sample_data(p1x);
 
-    p2y = vec3(in_sampling_pos.x,in_sampling_pos.y + y_v, in_sampling_pos.z)
-    p1y = vec3(in_sampling_pos.x,in_sampling_pos.y - y_v, in_sampling_pos.z)
+    vec3 p2y = vec3(in_sampling_pos.x,in_sampling_pos.y + y_v, in_sampling_pos.z);
+    vec3 p1y = vec3(in_sampling_pos.x,in_sampling_pos.y - y_v, in_sampling_pos.z);
     
     float p_sample_y = get_sample_data(p2y) - get_sample_data(p1y); 
 
-    p2z = vec3(in_sampling_pos.x,in_sampling_pos.y, in_sampling_pos.z + z_v)
-    p1z = vec3(in_sampling_pos.x,in_sampling_pos.y, in_sampling_pos.z - z_v)
+    vec3 p2z = vec3(in_sampling_pos.x,in_sampling_pos.y, in_sampling_pos.z + z_v);
+    vec3 p1z = vec3(in_sampling_pos.x,in_sampling_pos.y, in_sampling_pos.z - z_v);
     
     float p_sample_z = get_sample_data(p2z) - get_sample_data(p1z); 
 
@@ -79,12 +79,12 @@ get_gradient(vec3 in_sampling_pos)
     return normal;
 }
 
-vect
-binar_search(vec3 n_point, vec3 p_point, float value) {
+vec3 
+binary_search(vec3 n_point, vec3 p_point, float value) {
     //by default assuming that the correct point is the n_point
     vec3 r_point = n_point;
-
-    while(p_point < n_point) {
+    int i = 0;
+    while(true) {
         //take the middle point
         vec3 mid_point = (p_point + n_point)/2;
         //take the value of middle point
@@ -98,6 +98,8 @@ binar_search(vec3 n_point, vec3 p_point, float value) {
         } else {
             n_point = mid_point;
         }
+        i++;
+        if(i > 100)break;
     }
 
     return n_point;
@@ -196,20 +198,20 @@ if (TASK == 12 || TASK == 13){
         // get sample
         float s = get_sample_data(sampling_pos);
 
-        if(s > iso_value > previous_val || s < iso_value < previous_val) {
+        if(s > iso_value) {
 
             //Binary Search
     	    if (TASK == 13){
                 //new sample point
-    	        vec3 new_sample_point = binar_search(sampling_pos,first_pos, iso_value);
+    	        vec3 new_sample_point = binary_search(sampling_pos,first_pos, iso_value);
                 //new sample value
-                float s = get_sample_data(new_sample_point);
+                s = get_sample_data(new_sample_point);
             }
 
             //we hit some value
             // apply the transfer functions to retrieve color and opacity
             vec4 color = texture(transfer_texture, vec2(s, s));
-            vec4 dest  = color;
+            dst  = color;
 
             //Add Shading
             if(ENABLE_LIGHTNING == 1) {
@@ -219,8 +221,8 @@ if (TASK == 12 || TASK == 13){
                 float cross_product = dot(light_direction, normal);
                 vec3 diff = light_diffuse_color * max(cross_product, 0);
                 vec3 spec = light_specular_color * max(cross_product,0);
-                //dst = dest + vec4(diff,1.0) + vec4(spec,1.0);
-                dst = vec4(normal/2+0.5, 1.0);
+                dst = dst + vec4(diff,1.0) + vec4(spec,1.0);
+                //dst = vec4(normal/2+0.5, 1.0);
             }
     	    
             //Add Shadows
@@ -236,7 +238,7 @@ if (TASK == 12 || TASK == 13){
         // update the loop termination condition
         inside_volume = inside_volume_bounds(sampling_pos);
 	
-	    // increment the ray sampling position
+	// increment the ray sampling position
         sampling_pos += ray_increment;
     }
 }
