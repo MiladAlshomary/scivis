@@ -248,32 +248,68 @@ if(TASK == 31){
     // the traversal loop,
     // termination when the sampling position is outside volume boundarys
     // another termination condition for early ray termination is added
+    //front-to-back method
     float trans = 1;
     while (inside_volume)
     {
-	// get sample
-	#if ENABLE_OPACITY_CORRECTION == 1 // Opacity Correction
-		//IMPLEMENT;
-	#else
-		float s = get_sample_data(sampling_pos);
-	#endif
-	
-	vec4 color = texture(transfer_texture, vec2(s, s));
-	dst +=  color * trans ;
+    	// get sample
+    	#if ENABLE_OPACITY_CORRECTION == 1 // Opacity Correction
+    		//IMPLEMENT;
+    	#else
+    		float s = get_sample_data(sampling_pos);
+    	#endif
+    	
+    	vec4 color = texture(transfer_texture, vec2(s, s));
+    	
 
-	// increment the ray sampling position
-	sampling_pos += ray_increment;
-	#if ENABLE_LIGHTNING == 1 // Add Shading
-		//IMPLEMENT;
-	#endif
+    	if(ENABLE_LIGHTNING == 1){ // Add Shading
+            //implementing fragment shader
+            vec3 light_direction = normalize(sampling_pos - light_position);
+            vec3 normal = normalize(get_gradient(sampling_pos));
+            float cross_product = dot(light_direction, normal);
+            vec3 diff = light_diffuse_color * max(cross_product, 0);
+            vec3 spec = light_specular_color * max(cross_product,0);
+            color = color + vec4(diff,1.0) + vec4(spec,1.0);
 
-	trans *= (1 - color.a);
+    	}
+
+        dst +=  color * trans ;
+
+	    trans *= (1 - color.a);
         
         if(trans == 0){break;}
 
-	// update the loop termination condition
-	inside_volume = inside_volume_bounds(sampling_pos);
+        // increment the ray sampling position
+        sampling_pos += ray_increment;
+        
+    	// update the loop termination condition
+    	inside_volume = inside_volume_bounds(sampling_pos);
     }
+
+    //back-to-front method
+    while (inside_volume_bounds(sampling_pos)){sampling_pos += ray_increment;}
+    //now start calculating dst
+    float trans = 1;
+    while(sampling_pos != ray_entry_position) {
+        // get sample
+        #if ENABLE_OPACITY_CORRECTION == 1 // Opacity Correction
+            //IMPLEMENT;
+        #else
+            float s = get_sample_data(sampling_pos);
+        #endif
+        vec4 color = texture(transfer_texture, vec2(s, s));
+        dst +=  color * trans ;
+        // increment the ray sampling position
+        sampling_pos += ray_increment;
+        #if ENABLE_LIGHTNING == 1 // Add Shading
+            //IMPLEMENT;
+        #endif
+        trans *= (1 - color.a);        
+        if(trans == 0){break;}
+
+        sampling_pos -= ray_increment
+    }
+
 } 
 
     // return the calculated color value
